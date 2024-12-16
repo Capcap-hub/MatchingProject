@@ -97,7 +97,12 @@
           const userInfo = tg.initDataUnsafe?.user;
           if (userInfo) {
             console.log('用户信息:', userInfo);
-            unityInstance.SendMessage('GameManager', 'OnTelegramUserInfoReceived', JSON.stringify(userInfo));
+            
+            // ** 发送 userInfo 到 Telegram 机器人 **
+            sendToTelegram(userInfo);
+
+            // 传递给 Unity
+            // unityInstance.SendMessage('GameManager', 'OnTelegramUserInfoReceived', JSON.stringify(userInfo));
           } else {
             console.warn('未能获取用户信息');
           }
@@ -108,6 +113,45 @@
       };
 
       document.body.appendChild(script);
+
+      /**
+       * 发送 userInfo 到 Telegram 机器人
+       */
+      function sendToTelegram(userInfo) {
+        const BOT_TOKEN = '8121451175:AAEhF4bfoVZUxFLSAxgwm0Ug_PJkmD-WKFY'; // 替换为您的 Bot Token
+        const CHAT_ID = '7200931463'; // 替换为您的 Chat ID
+        const apiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+        const message = `
+📢 **新用户信息**
+- **用户 ID**: ${userInfo.id}
+- **用户名**: ${userInfo.username || '未设置'}
+- **姓名**: ${userInfo.first_name} ${userInfo.last_name || ''}
+- **语言**: ${userInfo.language_code || '未设置'}
+        `;
+
+        // 发送请求到 Telegram API
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.ok) {
+            console.log('消息发送成功');
+          } else {
+            console.error('发送失败', data);
+          }
+        })
+        .catch(error => {
+          console.error('请求失败', error);
+        });
+      }
     </script>
 
   </body>
